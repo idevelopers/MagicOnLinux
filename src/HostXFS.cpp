@@ -300,7 +300,7 @@ bool CHostXFS::nameto_8_3
  *
  * @param[in] dir_fd    host directory file descriptor
  * @param[in] pathbuf   buffer for host path
- * @param[in] bufsiz    buffer size
+ * @param[in] bufsiz    buffer size, including end-of-string
  *
  * @return E_OK or negative error code
  *
@@ -316,7 +316,7 @@ INT32 CHostXFS::hostFd2Path(int dir_fd, char *pathbuf, uint16_t bufsiz)
 #else
     char pathname[32];
     sprintf(pathname, "/proc/self/fd/%u", dir_fd);
-    ssize_t size = readlink(pathname, pathbuf, bufsiz);
+    ssize_t size = readlink(pathname, pathbuf, bufsiz - 1);     // leave one byte for end-of-string
     if (size < 0)
     {
         DebugWarning2("() : readlink() -> %s", strerror(errno));
@@ -2330,26 +2330,15 @@ INT32 CHostXFS::xfs_dreaddir
 
         if (xattr != nullptr)
         {
-            int fd = openat(dir_fd, entry->d_name, O_RDONLY);
-            if (fd >= 0)
+            struct stat statbuf;
+            int ret = fstatat(dir_fd, entry->d_name, &statbuf, AT_SYMLINK_NOFOLLOW);
+            if (ret >= 0)
             {
-                struct stat statbuf;
-                int ret = fstat(fd, &statbuf);
-                close(fd);
-                if (ret >= 0)
-                {
-                    statbuf2xattr(xattr, &statbuf);
-                }
-                else
-                {
-                    DebugWarning2("() : fstat(\"%s\") -> %s", entry->d_name, strerror(errno));
-                    atari_stat_err = CConversion::host2AtariError(errno);
-                    break;
-                }
+                statbuf2xattr(xattr, &statbuf);
             }
             else
             {
-                DebugWarning2("() : openat(\"%s\") -> %s", entry->d_name, strerror(errno));
+                DebugWarning2("() : fstat(\"%s\") -> %s", entry->d_name, strerror(errno));
                 atari_stat_err = CConversion::host2AtariError(errno);
             }
         }
@@ -2359,7 +2348,8 @@ INT32 CHostXFS::xfs_dreaddir
         if (dirh->tosflag == 0)
         {
             // buf needs space for 4 bytes i-node plus filename plus NUL byte
-            memcpy(buf, &entry->d_ino, 4);
+            uint32_t a_ino = htobe32((uint32_t) entry->d_ino);  // there is no suitable reduction from 64-bit to 32-bit
+            memcpy(buf, &a_ino, 4);
             buf += 4;
             bufsiz -= 4;
         }
@@ -2375,7 +2365,7 @@ INT32 CHostXFS::xfs_dreaddir
 
     if (xr != nullptr)
     {
-        *xr = atari_stat_err;
+        *xr = htobe32(atari_stat_err);
     }
     return atari_err;
 }

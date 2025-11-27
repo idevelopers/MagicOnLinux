@@ -31,7 +31,27 @@
 
 #include "config.h"
 
+#ifdef __APPLE__
+#include "macos_endian.h"
+// macOS uses st_mtimespec instead of st_mtim
+#define st_mtim st_mtimespec
+#define st_atim st_atimespec
+#define st_ctim st_ctimespec
+// AT_EMPTY_PATH is not available on macOS
+#ifndef AT_EMPTY_PATH
+#define AT_EMPTY_PATH 0
+#endif
+// RENAME_NOREPLACE is not available on macOS
+#ifndef RENAME_NOREPLACE
+#define RENAME_NOREPLACE (1 << 0)
+#endif
+// macOS uses S_IWRITE instead of __S_IWRITE
+#ifndef __S_IWRITE
+#define __S_IWRITE S_IWRITE
+#endif
+#else
 #include <endian.h>
+#endif
 #include <string.h>
 #include <fcntl.h>
 #include <errno.h>
@@ -42,6 +62,22 @@
 #include <sys/stat.h>
 
 #include "Debug.h"
+
+#ifdef __APPLE__
+// macOS doesn't have renameat2, so we provide a simple wrapper
+static int renameat2(int olddirfd, const char *oldpath, int newdirfd, const char *newpath, unsigned int flags)
+{
+    if (flags & RENAME_NOREPLACE) {
+        // Check if destination exists
+        struct stat st;
+        if (fstatat(newdirfd, newpath, &st, 0) == 0) {
+            errno = EEXIST;
+            return -1;
+        }
+    }
+    return renameat(olddirfd, oldpath, newdirfd, newpath);
+}
+#endif
 #include "Globals.h"
 #include "HostXFS.h"
 #include "Atari.h"
@@ -271,6 +307,13 @@ bool CHostXFS::nameto_8_3
  ************************************************************************************************/
 INT32 CHostXFS::hostFd2Path(int dir_fd, char *pathbuf, uint16_t bufsiz)
 {
+#ifdef __APPLE__
+    if (fcntl(dir_fd, F_GETPATH, pathbuf) == -1) 
+    {
+        DebugWarning2("() : fcntl(F_GETPATH) failed");
+        return EINTRN;
+    }
+#else
     char pathname[32];
     sprintf(pathname, "/proc/self/fd/%u", dir_fd);
     ssize_t size = readlink(pathname, pathbuf, bufsiz);
@@ -280,6 +323,8 @@ INT32 CHostXFS::hostFd2Path(int dir_fd, char *pathbuf, uint16_t bufsiz)
         return EINTRN;
     }
     pathbuf[size] = '\0';   // necessary
+#endif
+
     return E_OK;
 }
 
@@ -1811,6 +1856,14 @@ INT32 CHostXFS::xfs_xattr
     {
         flags |= AT_SYMLINK_NOFOLLOW;
     }
+    
+#ifdef __APPLE__
+    if (mode == 0 && host_name != NULL && strlen(host_name) == 0) {
+        host_name[0] = '.';
+        host_name[1] = '\0';
+    }
+#endif
+    
     int res = fstatat(dir_fd, host_name, &statbuf, flags);
     if (res < 0)
     {

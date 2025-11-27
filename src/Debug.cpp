@@ -27,7 +27,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#ifdef __APPLE__
+#include "macos_endian.h"
+#else
 #include <endian.h>
+#endif
 // Programm-Header
 #include "Debug.h"
 

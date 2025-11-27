@@ -24,7 +24,11 @@
 
 #include "config.h"
 // System-Header
+#ifdef __APPLE__
+#include "macos_endian.h"
+#else
 #include <endian.h>
+#endif
 // Programm-Header
 #include "Globals.h"
 #include "Debug.h"

@@ -24,6 +24,11 @@
 
 #include "Atari.h"
 
+// macOS endian compatibility
+#ifdef __APPLE__
+#include "macos_endian.h"
+#endif
+
 // endian conversion helpers
 
 #define getAtariBE16(addr) \

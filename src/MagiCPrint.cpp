@@ -25,7 +25,11 @@
 #include "config.h"
 
 #include <errno.h>
+#ifdef __APPLE__
+#include "macos_endian.h"
+#else
 #include <endian.h>
+#endif
 
 #include "Debug.h"
 #include "Atari.h"

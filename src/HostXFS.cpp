@@ -30,9 +30,9 @@
 */
 
 #include "config.h"
+#include "Globals.h"
 
 #ifdef __APPLE__
-#include "macos_endian.h"
 // macOS uses st_mtimespec instead of st_mtim
 #define st_mtim st_mtimespec
 #define st_atim st_atimespec
@@ -49,8 +49,6 @@
 #ifndef __S_IWRITE
 #define __S_IWRITE S_IWRITE
 #endif
-#else
-#include <endian.h>
 #endif
 #include <string.h>
 #include <fcntl.h>
@@ -78,7 +76,7 @@ static int renameat2(int olddirfd, const char *oldpath, int newdirfd, const char
     return renameat(olddirfd, oldpath, newdirfd, newpath);
 }
 #endif
-#include "Globals.h"
+
 #include "HostXFS.h"
 #include "Atari.h"
 #include "emulation_globals.h"

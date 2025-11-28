@@ -29,13 +29,8 @@
 #define HOST_FH_SIZE MAX_HANDLE_SZ   // 128 bytes, while in fact 8 bytes are enough
 
 // Platform compatibility for device and inode types
-#ifdef __APPLE__
 typedef dev_t host_dev_t;
 typedef ino_t host_ino_t;
-#else
-typedef __dev_t host_dev_t;
-typedef __ino_t host_ino_t;
-#endif
 
 #pragma GCC diagnostic push
 //#pragma GCC diagnostic ignored "-Wzero-length-array"

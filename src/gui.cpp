@@ -26,12 +26,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
-#ifdef __APPLE__
-#include "macos_endian.h"
-#else
-#include <endian.h>
-#endif
-
+#include "Globals.h"
 #include "Debug.h"
 #include "Atari.h"
 #include "emulation_globals.h"

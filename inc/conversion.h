@@ -23,11 +23,7 @@
 */
 
 #include "Atari.h"
-
-// macOS endian compatibility
-#ifdef __APPLE__
-#include "macos_endian.h"
-#endif
+#include "Globals.h"
 
 // endian conversion helpers
 

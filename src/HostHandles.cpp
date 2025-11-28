@@ -29,14 +29,11 @@
 #include <unistd.h>
 #include <time.h>
 #include <dirent.h>
-#ifdef __APPLE__
-#include "macos_endian.h"
-#else
-#include <endian.h>
-#endif
 #include <assert.h>
 #include <fcntl.h>
+
 // program headers
+#include "Globals.h"
 #include "Debug.h"
 #include "HostHandles.h"
 

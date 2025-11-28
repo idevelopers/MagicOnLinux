@@ -252,7 +252,11 @@ int main(int argc, char *argv[])
     int stretch_y = -1;
     int atari_memsize = -1;
     const char *config = "~/.config/magiclinux.conf";
+#ifdef __APPLE__
+    const char *editor_command = "open -e"; 
+#else
     const char *editor_command = "xdg-open";        //  "gnome-text-editor";
+#endif
     const char *file_a2h = nullptr;
     const char *file_h2a = nullptr;
     bool bRunEditor = false;
